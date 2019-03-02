@@ -1,24 +1,16 @@
 
 from MQTTAQClient import MQTTClient
-#from aqi import AQIClient
+from aqi import AQIClient #comment out if debug mode
 from Aggregator import Aggregator
 
 import json, time, sys, struct
-#import serial
-
-
-#host = "ad50nqq2ecfo9-ats.iot.us-west-2.amazonaws.com"
-#rootCAPath = "../../aws-resources/root-CA.crt"
-#certificatePath = "../../aws-resources/RaspPi.cert.pem"
-#privateKeyPath = "../../aws-resources/RaspPi.private.key"
-#port = 8883
-#clientId = "RaspberryPi"
-#topic = "pi/measurements/aq"
-
-
-
 
 def main():
+
+	debug = False
+	debug_data = []
+
+
 	mqtt_client = MQTTClient(
 		"RaspberryPi", 
 		"pi/measurements/aq",
@@ -30,14 +22,9 @@ def main():
 		)
 
 	mqtt_client.InitClient()
-	#mqtt_client.StartPublish()
-	aqi_client = None
-	
-	debug = True
-	debug_data = []
 
+	aqi_client = None
 	if not debug:
-		print("hellllo")
 		aqi_client = AQIClient()
 
 	aggregator = Aggregator()
@@ -56,10 +43,9 @@ def main():
 
 			time.sleep(1)
 		else:
+
 			aqi_client.cmd_set_sleep(0)
 			aqi_client.cmd_set_mode(1)
-
-			
 
 			for t in range(15):
 				values = aqi_client.cmd_query_data()
