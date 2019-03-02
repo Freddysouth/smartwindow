@@ -26,9 +26,6 @@ class AQIClient:
 
     byte, data = 0, ""
 
-    def __init__(self, mqttClient):
-        self.mqttClient = mqttClient
-
     def dump(self, d, prefix=''):
         print(prefix + ' '.join(x.encode('hex') for x in d))
 
