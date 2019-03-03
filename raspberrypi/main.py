@@ -15,6 +15,8 @@ def get_ip_address(ifname):
 
 def main():
 
+	time.sleep(30)#wait 30 seconds before doing anything, just to make sure that pi is booted and connected
+
 	debug = False
 	debug_data = []
 	data = []
