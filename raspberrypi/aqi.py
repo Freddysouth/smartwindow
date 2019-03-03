@@ -50,7 +50,7 @@ class AQIClient:
 
         if self.DEBUG:
             dump(ret, '> ')
-        return ret.encode()
+        return ret
 
     def process_data(self, d):
         r = struct.unpack('<HHxxBB', d[2:])
