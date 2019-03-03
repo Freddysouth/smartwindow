@@ -41,11 +41,11 @@ class AQIClient:
         print(prefix + ' '.join(x.encode('hex') for x in d))
 
     def construct_command(self, cmd, data=[]):
-        assert len(self.data) <= 12
-        self.data += [0,]*(12-len(self.data))
-        checksum = (sum(self.data)+cmd-2)%256
+        assert len(data) <= 12
+        data += [0,]*(12-len(data))
+        checksum = (sum(data)+cmd-2)%256
         ret = "\xaa\xb4" + chr(cmd)
-        ret += ''.join(chr(x) for x in self.data)
+        ret += ''.join(chr(x) for x in data)
         ret += "\xff\xff" + chr(checksum) + "\xab"
 
         if DEBUG:
@@ -90,6 +90,7 @@ class AQIClient:
 
     def cmd_set_sleep(self, sleep=1):
         mode = 0 if sleep else 1
+        print(self.CMD_SLEEP)
         self.ser.write(self.construct_command(self.CMD_SLEEP, [0x1, mode]))
         read_response()
 
