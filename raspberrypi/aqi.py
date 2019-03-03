@@ -29,7 +29,8 @@ class AQIClient:
         self.ser = serial.Serial()
         self.ser.port = "/dev/ttyUSB0"
         self.ser.baudrate = 9600
-        
+        self.ser.open()
+        self.ser.flushInput()
 
         self.byte = 0
         self.data = ""
@@ -49,7 +50,7 @@ class AQIClient:
 
         if self.DEBUG:
             dump(ret, '> ')
-        return ret.encode()
+        return ret
 
     def process_data(self, d):
         r = struct.unpack('<HHxxBB', d[2:])
@@ -76,23 +77,12 @@ class AQIClient:
         return self.byte + d
 
     def cmd_set_mode(self, mode=1):
-        self.ser.open()
-        self.ser.flushInput()
-
         self.ser.write(self.construct_command(self.CMD_MODE, [0x1, mode]))
         self.read_response()
 
-        self.ser.close()
-
     def cmd_query_data(self):
-        self.ser.open()
-        self.ser.flushInput()
-
         self.ser.write(self.construct_command(self.CMD_QUERY_DATA))
         d = self.read_response()
-
-        self.ser.close()
-        
         values = []
         if d[1] == "\xc0":
             values = self.process_data(d)
@@ -100,45 +90,23 @@ class AQIClient:
 
     def cmd_set_sleep(self, sleep=1):
         mode = 0 if sleep else 1
-
-        self.ser.open()
-        self.ser.flushInput()
-
         self.ser.write(self.construct_command(self.CMD_SLEEP, [0x1, mode]))
         self.read_response()
 
-        self.ser.close()
-
     def cmd_set_working_period(self, period):
-        self.ser.open()
-        self.ser.flushInput()
-
         self.ser.write(self.construct_command(self.CMD_WORKING_PERIOD, [0x1, period]))
         self.read_response()
 
-        self.ser.close()
-
     def cmd_firmware_ver(self):
-        self.ser.open()
-        self.ser.flushInput()
-
         self.ser.write(self.construct_command(self.CMD_FIRMWARE))
         d = self.read_response()
         self.process_version(d)
 
-        self.ser.close()
-
     def cmd_set_id(self, id):
         id_h = (id>>8) % 256
         id_l = id % 256
-
-        self.ser.open()
-        self.ser.flushInput()
-
         self.ser.write(self.construct_command(self.CMD_DEVICE_ID, [0]*10+[id_l, id_h]))
         self.read_response()
-
-        self.ser.close()
 
 
     
