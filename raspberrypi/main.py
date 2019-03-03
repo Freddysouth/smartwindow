@@ -87,7 +87,7 @@ def main():
 
 				mqtt_client.PublishJsonPayload(payload_json)
 				
-				data.clear()
+				del data[:]
 
 			print("Appending values...")
 			# append new values
