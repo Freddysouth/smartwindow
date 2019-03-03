@@ -36,7 +36,9 @@ def main():
 		aqi_client = AQIClient()
 
 	aggregator = Aggregator()
-
+	
+	aqi_client.cmd_set_sleep(0)
+	aqi_client.cmd_set_mode(1)
 	while True:
 
 		if debug == True:
@@ -54,8 +56,8 @@ def main():
 
 			print("Start...")
 
-			aqi_client.cmd_set_sleep(0)
-			aqi_client.cmd_set_mode(1)
+			#aqi_client.cmd_set_sleep(0)
+			#aqi_client.cmd_set_mode(1)
 
 			#for t in range(5):
 			#	print("####for t in range(15)####")
@@ -98,9 +100,9 @@ def main():
 			#	json.dump(data, outfile)
 
 
-			print("Going to sleep for 1 sec...")
-			aqi_client.cmd_set_mode(0)
-			aqi_client.cmd_set_sleep()
+			#print("Going to sleep for 1 sec...")
+			#aqi_client.cmd_set_mode(0)
+			#aqi_client.cmd_set_sleep()
 			time.sleep(1)
 
 if __name__ == "__main__":
