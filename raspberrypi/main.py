@@ -93,8 +93,7 @@ def main():
 			# append new values
 			values = aqi_client.cmd_query_data()
 			if values is not None:
-				print("Measurement " + str(len(data) + ": ")
-				print({"pm25": values[0], "pm10": values[1]})
+				print('Measurement %s: %s\n' % (len(data), {"pm25": values[0], "pm10": values[1]}))
 				data.append({'pm25': values[0], 'pm10': values[1], 'timestamp': time.strftime("%d.%m.%Y %H:%M:%S")})
 
 			# save it
