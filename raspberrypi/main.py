@@ -74,7 +74,7 @@ def main():
 			#print("####open data####")
 			#print(data)
 
-			if len(data) > 10:
+			if len(data) > 60:
 				print("Aggregating and publishing packet...")
 				aggregate = aggregator.get_mean(data)
 				payload = {
