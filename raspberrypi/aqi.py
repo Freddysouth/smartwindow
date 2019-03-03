@@ -48,7 +48,7 @@ class AQIClient:
         ret += ''.join(chr(x) for x in data)
         ret += "\xff\xff" + chr(checksum) + "\xab"
 
-        if DEBUG:
+        if self.DEBUG:
             dump(ret, '> ')
         return ret
 
@@ -72,42 +72,41 @@ class AQIClient:
 
         d = self.ser.read(size=9)
 
-        if DEBUG:
+        if self.DEBUG:
             dump(d, '< ')
         return self.byte + d
 
-    def cmd_set_mode(self, mode=MODE_QUERY):
-        self.ser.write(construct_command(CMD_MODE, [0x1, mode]))
-        read_response()
+    def cmd_set_mode(self, mode=self.MODE_QUERY):
+        self.ser.write(self.construct_command(self.CMD_MODE, [0x1, mode]))
+        self.read_response()
 
     def cmd_query_data(self):
-        self.ser.write(construct_command(CMD_QUERY_DATA))
-        d = read_response()
+        self.ser.write(self.construct_command(self.CMD_QUERY_DATA))
+        d = self.read_response()
         values = []
         if d[1] == "\xc0":
-            values = process_data(d)
+            values = self.process_data(d)
         return values
 
     def cmd_set_sleep(self, sleep=1):
         mode = 0 if sleep else 1
-        print(self.CMD_SLEEP)
         self.ser.write(self.construct_command(self.CMD_SLEEP, [0x1, mode]))
-        read_response()
+        self.read_response()
 
     def cmd_set_working_period(self, period):
-        self.ser.write(construct_command(CMD_WORKING_PERIOD, [0x1, period]))
-        read_response()
+        self.ser.write(self.construct_command(self.CMD_WORKING_PERIOD, [0x1, period]))
+        self.read_response()
 
     def cmd_firmware_ver(self):
-        self.ser.write(construct_command(CMD_FIRMWARE))
-        d = read_response()
-        process_version(d)
+        self.ser.write(self.construct_command(self.CMD_FIRMWARE))
+        d = self.read_response()
+        self.process_version(d)
 
     def cmd_set_id(self, id):
         id_h = (id>>8) % 256
         id_l = id % 256
-        self.ser.write(construct_command(CMD_DEVICE_ID, [0]*10+[id_l, id_h]))
-        read_response()
+        self.ser.write(self.construct_command(self.CMD_DEVICE_ID, [0]*10+[id_l, id_h]))
+        self.read_response()
 
 
     
