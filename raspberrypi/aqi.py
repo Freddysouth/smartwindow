@@ -76,7 +76,7 @@ class AQIClient:
             dump(d, '< ')
         return self.byte + d
 
-    def cmd_set_mode(self, mode=self.MODE_QUERY):
+    def cmd_set_mode(self, mode=AQIClient.MODE_QUERY):
         self.ser.write(self.construct_command(self.CMD_MODE, [0x1, mode]))
         self.read_response()
 
