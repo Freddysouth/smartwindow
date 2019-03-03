@@ -54,7 +54,7 @@ def main():
 			time.sleep(1)
 		else:
 
-			print("Start...")
+			#print("Start...")
 
 			#aqi_client.cmd_set_sleep(0)
 			#aqi_client.cmd_set_mode(1)
@@ -72,7 +72,6 @@ def main():
 			#print("####open data####")
 			#print(data)
 
-			
 			if len(data) > 10:
 				print("Aggregating and publishing packet...")
 				aggregate = aggregator.get_mean(data)
@@ -88,11 +87,14 @@ def main():
 				mqtt_client.PublishJsonPayload(payload_json)
 				
 				del data[:]
+				print(data)
 
-			print("Appending values...")
+			#print("Appending values...")
 			# append new values
 			values = aqi_client.cmd_query_data()
 			if values is not None:
+				print("Measurement " + str(len(data) + ": ")
+				print({"pm25": values[0], "pm10": values[1]})
 				data.append({'pm25': values[0], 'pm10': values[1], 'timestamp': time.strftime("%d.%m.%Y %H:%M:%S")})
 
 			# save it
