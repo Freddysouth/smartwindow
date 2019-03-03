@@ -90,7 +90,7 @@ class AQIClient:
 
     def cmd_set_sleep(self, sleep=1):
         mode = 0 if sleep else 1
-        self.ser.write(self.construct_command(CMD_SLEEP, [0x1, mode]))
+        self.ser.write(self.construct_command(self.CMD_SLEEP, [0x1, mode]))
         read_response()
 
     def cmd_set_working_period(self, period):
