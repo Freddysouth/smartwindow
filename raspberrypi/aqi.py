@@ -16,25 +16,36 @@ class AQIClient:
     CMD_WORKING_PERIOD = 8
     MODE_ACTIVE = 0
     MODE_QUERY = 1
+    #ser = serial.Serial()
+    #ser.port = "/dev/ttyUSB0"
+    #ser.baudrate = 9600
 
-    ser = serial.Serial()
-    ser.port = "/dev/ttyUSB0"
-    ser.baudrate = 9600
+    #ser.open()
+    #ser.flushInput()
 
-    ser.open()
-    ser.flushInput()
+    #byte, data = 0, ""
 
-    byte, data = 0, ""
+    def __init__(self):
+        self.ser = serial.Serial()
+        self.ser.port = "/dev/ttyUSB0"
+        self.ser.baudrate = 9600
+        self.ser.open()
+        self.ser.flushInput()
+
+        self.byte = 0
+        self.data = ""
+
+
 
     def dump(self, d, prefix=''):
         print(prefix + ' '.join(x.encode('hex') for x in d))
 
     def construct_command(self, cmd, data=[]):
-        assert len(data) <= 12
-        data += [0,]*(12-len(data))
-        checksum = (sum(data)+cmd-2)%256
+        assert len(self.data) <= 12
+        self.data += [0,]*(12-len(self.data))
+        checksum = (sum(self.data)+cmd-2)%256
         ret = "\xaa\xb4" + chr(cmd)
-        ret += ''.join(chr(x) for x in data)
+        ret += ''.join(chr(x) for x in self.data)
         ret += "\xff\xff" + chr(checksum) + "\xab"
 
         if DEBUG:
@@ -55,22 +66,22 @@ class AQIClient:
         print("Y: {}, M: {}, D: {}, ID: {}, CRC={}".format(r[0], r[1], r[2], hex(r[3]), "OK" if (checksum==r[4] and r[5]==0xab) else "NOK"))
 
     def read_response(self):
-        byte = 0
-        while byte != "\xaa":
-            byte = ser.read(size=1)
+        self.byte = 0
+        while self.byte != "\xaa":
+            self.byte = self.ser.read(size=1)
 
-        d = ser.read(size=9)
+        d = self.ser.read(size=9)
 
         if DEBUG:
             dump(d, '< ')
-        return byte + d
+        return self.byte + d
 
     def cmd_set_mode(self, mode=MODE_QUERY):
-        ser.write(construct_command(CMD_MODE, [0x1, mode]))
+        self.ser.write(construct_command(CMD_MODE, [0x1, mode]))
         read_response()
 
     def cmd_query_data(self):
-        ser.write(construct_command(CMD_QUERY_DATA))
+        self.ser.write(construct_command(CMD_QUERY_DATA))
         d = read_response()
         values = []
         if d[1] == "\xc0":
@@ -79,22 +90,22 @@ class AQIClient:
 
     def cmd_set_sleep(self, sleep=1):
         mode = 0 if sleep else 1
-        ser.write(construct_command(CMD_SLEEP, [0x1, mode]))
+        self.ser.write(construct_command(CMD_SLEEP, [0x1, mode]))
         read_response()
 
     def cmd_set_working_period(self, period):
-        ser.write(construct_command(CMD_WORKING_PERIOD, [0x1, period]))
+        self.ser.write(construct_command(CMD_WORKING_PERIOD, [0x1, period]))
         read_response()
 
     def cmd_firmware_ver(self):
-        ser.write(construct_command(CMD_FIRMWARE))
+        self.ser.write(construct_command(CMD_FIRMWARE))
         d = read_response()
         process_version(d)
 
     def cmd_set_id(self, id):
         id_h = (id>>8) % 256
         id_l = id % 256
-        ser.write(construct_command(CMD_DEVICE_ID, [0]*10+[id_l, id_h]))
+        self.ser.write(construct_command(CMD_DEVICE_ID, [0]*10+[id_l, id_h]))
         read_response()
 
 
