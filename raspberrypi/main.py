@@ -75,7 +75,7 @@ def main():
 				aggregate = aggregator.get_mean(data)
 				prepend = {
 					"device": "window_lars",
-					"device_ip": get_ip_address("wlan0")
+					"device_ip": get_ip_address("wlan0"),
 					"pm25": aggregate["pm25"],
 					"pm10": aggregate["pm10"],
 					"timestamp": aggregate["timestamp"]
