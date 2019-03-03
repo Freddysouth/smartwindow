@@ -3,7 +3,15 @@ from MQTTAQClient import MQTTClient
 from aqi import AQIClient #comment out if debug mode
 from Aggregator import Aggregator
 
-import json, time, sys, struct
+import json, time, sys, struct, socket, fcntl
+
+def get_ip_address(ifname):
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    return socket.inet_ntoa(fcntl.ioctl(
+        s.fileno(),
+        0x8915,  # SIOCGIFADDR
+        struct.pack('256s', ifname[:15])
+    )[20:24])
 
 def main():
 
@@ -58,11 +66,15 @@ def main():
 				data = json.load(json_data)
 			
 			# check if length is more than 100 and delete first element
-			if len(data) > 60:
+			if len(data) > 2:
 				aggregate = aggregator.get_mean(data)
-				aggregate_json = json.dump(aggregate)
+				prepend = {
+					"device": "window_lars",
+					"device_ip": get_ip_address("wlan0")
+				}
+				payload = json.dumps({**prepend, **aggregate})
 
-				mqtt_client.PublishJsonPayload(aggregate_json)
+				mqtt_client.PublishJsonPayload(payload)
 				
 				data.clear()
 
@@ -74,10 +86,10 @@ def main():
 			with open('/var/www/html/aqi.json', 'w') as outfile:
 				json.dump(data, outfile)
 
-			print("Going to sleep for 1 sec...")
+			print("Going to sleep for 5 sec...")
 			aqi_client.cmd_set_mode(0)
 			aqi_client.cmd_set_sleep()
-			time.sleep(1)
+			time.sleep(5)
 
 if __name__ == "__main__":
 	main()
