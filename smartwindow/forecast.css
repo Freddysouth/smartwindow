@@ -1,0 +1,45 @@
+.header {
+    background-color:linen;
+    height: 40px;
+    font-family: 'Roboto', sans-serif;
+    font-size: 15px;
+    padding: 10px;
+    padding-left: 20px;
+    color: rgb(129,123,111);
+}
+
+.background{
+    background-image: url("images/industry-611668.jpg");
+    background-repeat:no-repeat;
+    background-size:cover;
+}
+
+.card-block{
+    background-color: rgba(255,255,255,0.5) !important;
+    
+}
+
+.card-deck{
+    padding-top:130px;
+    padding-bottom: 240px;
+    margin-left: 20px;
+    margin-right: 20px;
+}
+
+.card img{
+    width: 100%;
+}
+.card{
+    text-align: center;
+    border: none !important;
+    background-color: transparent !important;
+}
+.card-footer{
+    background-color: rgba(255,255,255,0.6) !important;    
+}
+
+.card-title{
+    font-size: 20px;
+}
+
+
