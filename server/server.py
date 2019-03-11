@@ -14,53 +14,38 @@ import json
 
 from LSTMForecast import LSTMForecast
 
-
 app = flask.Flask(__name__)
 model = None
 
 DATAFORMAT = ['date', 'PM2.5', 'humidity', 'wnd_spd10', 'temp_avg', 'precipitation_avg']
 
-def load_model():
-    # load the pre-trained Keras model (here we are using a model
-    # pre-trained on ImageNet and provided by Keras, but you can
-    # substitute in your own networks just as easily)
-    global model
-    model = keras.models.load_model("model.h5")
-
-
-def series_to_supervised(data, n_in=1, n_out=1, dropnan=True):
-  n_vars = 1 if type(data) is list else data.shape[1]
-  df = DataFrame(data)
-  cols, names = list(), list()
-  # input sequence (t-n, ... t-1)
-  for i in range(n_in, 0, -1):
-    cols.append(df.shift(i))
-    names += [('var%d(t-%d)' % (j+1, i)) for j in range(n_vars)]
-  # forecast sequence (t, t+1, ... t+n)
-  for i in range(0, n_out):
-    cols.append(df.shift(-i))
-    if i == 0:
-      names += [('var%d(t)' % (j+1)) for j in range(n_vars)]
-    else:
-      names += [('var%d(t+%d)' % (j+1, i)) for j in range(n_vars)]
-  # put it all together
-  agg = concat(cols, axis=1)
-  agg.columns = names
-  # drop rows with NaN values
-  if dropnan:
-    agg.dropna(inplace=True)
-  return agg
-
-
+def makeListOfWeatherParams(keys, weather):
+	d = []
+	for day in weather:
+		dayList = []
+		for key in keys:
+			value = 0
+			if key == 'highTemperature':
+				value = (float(day['highTemperature']) + float(day['lowTemperature']))/2
+			else:
+				if day[key] != '*':
+					value = day[key]
+				else:
+					value = 0
+			dayList.append(float(value))
+		d.append(dayList)
+	return d
 
 def getWeather():
-  response = requests.get("https://weather.cit.api.here.com/weather/1.0/report.json?product=forecast_7days&zipcode=10025&oneobservation=true&app_id=Is7EbpLYqp7H4EUwNyMz&app_code=sdwekigD9nSSWlQBa0pZ3g")
-  data = response.json()
-  return json.dumps(data)
+	response = requests.get("https://weather.cit.api.here.com/weather/1.0/report.json?product=forecast_7days_simple&zipcode=93117&oneobservation=true&app_id=Is7EbpLYqp7H4EUwNyMz&app_code=sdwekigD9nSSWlQBa0pZ3g")
+	data = response.json()
+	weather = data["dailyForecasts"]["forecastLocation"]["forecast"]
+	listOfWeatherParams = makeListOfWeatherParams(["highTemperature", "humidity", "rainFall", "windSpeed"], weather)
+	
 
 @app.route("/predict", methods=["POST"])
 def predict():
-  pass
+	pass
 
 
 def prepareData():
@@ -72,20 +57,21 @@ def prepareData():
 	
 
 if __name__ == "__main__":
-  print(("* Loading Keras model and Flask starting server..."
-      "please wait until server has fully started"))
-  #dataset = read_csv('pollution.csv', header=0, index_col=0)
-  #print(dataset)
-  #values = dataset.values[50 : 52]
-  dataset = prepareData()
+	print(("* Loading Keras model and Flask starting server..."
+	  "please wait until server has fully started"))
+	#dataset = read_csv('pollution.csv', header=0, index_col=0)
+	#print(dataset)
+	#values = dataset.values[50 : 52]
+	getWeather()
+	dataset = prepareData()
 
-  predictData = dataset.values[10:20]
-  print(predictData)
-  predictor = LSTMForecast(dataset.values, 4)
-  predictor.init('models/model.h5', [6,7,8,9], False)
+	predictData = dataset.values[10:20]
+	print(predictData)
+	predictor = LSTMForecast(dataset.values, 4)
+	predictor.init('models/model.h5', [0,6,7,8,9], True)
 
-  values = predictor.predict(predictData)
+	values = predictor.predict(predictData)
 
-  print(values)
+	print(values)
 
-  app.run()
+	app.run()

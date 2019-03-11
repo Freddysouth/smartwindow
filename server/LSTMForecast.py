@@ -44,9 +44,10 @@ class LSTMForecast:
 		df = DataFrame(self.values)
 		cols, names = list(), list()
 		# input sequence (t-n, ... t-1)
-		for i in range(n_in, 0, -1):
-			cols.append(df.shift(i))
-			names += [('var%d(t-%d)' % (j+1, i)) for j in range(n_vars)]
+		#for i in range(n_in, 0, -1):
+		shiftInput = 0
+		cols.append(df.shift(shiftInput))
+		names += [('var%d(t-%d)' % (j, shiftInput)) for j in range(n_vars)]
 		# forecast sequence (t, t+1, ... t+n)
 		for i in range(0, n_out):
 			cols.append(df.shift(-i))
@@ -64,8 +65,8 @@ class LSTMForecast:
 
 	def dropColumns(self, columnIndexes):
 		reframed = self.series_to_supervised(1, 1)
-		print(reframed)
 		reframed.drop(reframed.columns[columnIndexes], axis=1, inplace=True)
+		print("########### REFRAMED: ")
 		print(reframed)
 		self.values = reframed.values
 
@@ -145,7 +146,7 @@ class LSTMForecast:
 	def predict(self, inputData):
 		#inputData[:, 4] = self.encoder.transform(inputData[:, 4])
 		scaled = self.scaler.transform(inputData)
-		
+		scaled = scaled[:, 1:]
 		normalizedPrediction = self.getNormalizedPrediction(scaled)
 		actualPrediction = self.getActualPrediction(scaled, normalizedPrediction)
 
