@@ -19,6 +19,9 @@ model = None
 
 DATAFORMAT = ['date', 'PM2.5', 'humidity', 'wnd_spd10', 'temp_avg', 'precipitation_avg']
 
+def toFarenheit(c):
+	return 9/5 * c + 32;
+
 def makeListOfWeatherParams(keys, weather):
 	d = []
 	for day in weather:
@@ -26,7 +29,8 @@ def makeListOfWeatherParams(keys, weather):
 		for key in keys:
 			value = 0
 			if key == 'highTemperature':
-				value = (float(day['highTemperature']) + float(day['lowTemperature']))/2
+				avgTemp = (float(day['highTemperature']) + float(day['lowTemperature']))/2
+				value = toFarenheit(avgTemp)
 			else:
 				if day[key] != '*':
 					value = day[key]
@@ -40,8 +44,8 @@ def getWeather():
 	response = requests.get("https://weather.cit.api.here.com/weather/1.0/report.json?product=forecast_7days_simple&zipcode=93117&oneobservation=true&app_id=Is7EbpLYqp7H4EUwNyMz&app_code=sdwekigD9nSSWlQBa0pZ3g")
 	data = response.json()
 	weather = data["dailyForecasts"]["forecastLocation"]["forecast"]
-	listOfWeatherParams = makeListOfWeatherParams(["highTemperature", "humidity", "rainFall", "windSpeed"], weather)
-	
+	listOfWeatherParams = makeListOfWeatherParams(["humidity", "windSpeed", "highTemperature", "rainFall"], weather)
+	return listOfWeatherParams
 
 @app.route("/predict", methods=["POST"])
 def predict():
@@ -62,16 +66,20 @@ if __name__ == "__main__":
 	#dataset = read_csv('pollution.csv', header=0, index_col=0)
 	#print(dataset)
 	#values = dataset.values[50 : 52]
-	getWeather()
+	
+	forcastedWeather = getWeather()
+	print(forcastedWeather)
 	dataset = prepareData()
-
+	print(dataset)
 	predictData = dataset.values[10:20]
-	print(predictData)
-	predictor = LSTMForecast(dataset.values, 4)
-	predictor.init('models/model.h5', [0,6,7,8,9], True)
+	
+	predictorP25 = LSTMForecast(dataset.values, 4)
+	predictorP25.init('models/model.h5', [0,6,7,8,9], False)
 
-	values = predictor.predict(predictData)
+	#values = predictorP25.predict(predictData[:, 1:])
+	predictedPollution = predictorP25.predict(forcastedWeather)
 
-	print(values)
+	print("###### RESULT ######")
+	print(predictedPollution)
 
 	app.run()

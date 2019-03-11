@@ -66,8 +66,8 @@ class LSTMForecast:
 	def dropColumns(self, columnIndexes):
 		reframed = self.series_to_supervised(1, 1)
 		reframed.drop(reframed.columns[columnIndexes], axis=1, inplace=True)
-		print("########### REFRAMED: ")
-		print(reframed)
+		#print("########### REFRAMED: ")
+		#print(reframed)
 		self.values = reframed.values
 
 	def splitTrainTestSets(self, trainRatio):
@@ -118,7 +118,7 @@ class LSTMForecast:
 
 	def getActualPrediction(self, predictionInput, prediction):
 		#predictionInput = predictionInput.reshape((predictionInput.shape[0], predictionInput.shape[2]))
-		actualizedPrediction = np.concatenate((prediction, predictionInput[:, 1:]), axis=1)
+		actualizedPrediction = np.concatenate((prediction, predictionInput), axis=1)
 		actualizedPrediction = self.scaler.inverse_transform(actualizedPrediction)
 		return actualizedPrediction
 
@@ -145,8 +145,13 @@ class LSTMForecast:
 	#input format: [[weatherparameters...., previosPollution]]
 	def predict(self, inputData):
 		#inputData[:, 4] = self.encoder.transform(inputData[:, 4])
+		prepend = np.zeros((len(inputData), 1))
+		inputData = np.concatenate((prepend, inputData), axis=1)
+		#print(inputData[0])
+		
 		scaled = self.scaler.transform(inputData)
 		scaled = scaled[:, 1:]
+
 		normalizedPrediction = self.getNormalizedPrediction(scaled)
 		actualPrediction = self.getActualPrediction(scaled, normalizedPrediction)
 
