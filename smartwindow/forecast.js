@@ -1,11 +1,15 @@
-var values = [0.2,1,3,2,4,5,6];
-var lowmedhigh = ["low", "high", "low", "medium", "low", "medium", "low"];
+//var dict = '{"pollutionValue": [12.09, 2, 90, 31, 12, 35.5, 90], "pollutionLevel": ["medium", "low", "high", "medium", "low", "high", "high"]}'
+
+function jsonToLists(jsonFile){
+    var pollutionDict = JSON.parse(jsonFile);
+    pollution(pollutionDict.pollutionValue, pollutionDict.pollutionLevel);    
+}
+//Place pollutionValue in HTML "text-muted" and change textcolor and window image according to the pollutionLevel.
 
 function pollution(listOfValues, listOfLevel){
 	var i;
 	for (i = 0; i < 7; i++){
 		var n = i.toString();
-        //document.getElementsByClassName("card-text")[i].innerHTML = listOfValues[i];
         document.getElementsByClassName("text-muted")[i].innerHTML = listOfValues[i];
         
         if (listOfLevel[i] == "low"){
@@ -26,6 +30,7 @@ function pollution(listOfValues, listOfLevel){
 	}
 }
 
+//Days placed in "card-title" in HTML
 var days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
 function transformDay(dayInNumber){
@@ -46,4 +51,4 @@ function dateInCard(){
 }
 
 dateInCard();
-pollution(values, lowmedhigh);
+//jsonToLists(the request that returns json object);
