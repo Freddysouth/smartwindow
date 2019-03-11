@@ -1,17 +1,23 @@
 .header {
     background-color:linen;
     height: 40px;
-    font-family: 'Roboto', sans-serif;
     font-size: 15px;
     padding: 10px;
     padding-left: 20px;
     color: rgb(129,123,111);
 }
 
-.background{
-    background-image: url("images/industry-611668.jpg");
+#logo{
+    width:35%;
+    margin-top: 40px;
+    margin-left: 500px;
+}
+
+body{
+    background-image: url("images/coast.jpg");
     background-repeat:no-repeat;
     background-size:cover;
+    font-family: 'Lato', sans-serif;
 }
 
 .card-block{
@@ -20,10 +26,10 @@
 }
 
 .card-deck{
-    padding-top:130px;
-    padding-bottom: 240px;
-    margin-left: 20px;
-    margin-right: 20px;
+    margin-top: -70px;
+    margin-left: 150px;
+    margin-right: 150px;
+    background-color: rgba(234,224,212,0.4);
 }
 
 .card img{
@@ -33,28 +39,33 @@
     text-align: center;
     border: none !important;
     background-color: transparent !important;
+    color: black !important;
 }
 .card-footer{
     background-color: rgba(255,255,255,0.6) !important; 
+
 }
 
 .card-title{
-    font-size: 20px;
+    font-size: 12px;
+    color: #605B62;
 }
 
 .text-muted{
-    color: black !important;
+    color: inherit !important;
+    font-family: 'Lato' !important;
+    font-weight: bold !important;
 }
 
 #green{
-    background-color: rgba(78,168,69,1) !important;
+    color: green !important;
 }
 
 #yellow{
-    background-color: yellow !important;
+    color: #FDAE12;
 }
 
 #red{
-    background-color: rgba(231, 76, 60, 1) !important;
+    color: red !important;
 }
 
