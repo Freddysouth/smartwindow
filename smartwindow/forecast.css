@@ -35,11 +35,26 @@
     background-color: transparent !important;
 }
 .card-footer{
-    background-color: rgba(255,255,255,0.6) !important;    
+    background-color: rgba(255,255,255,0.6) !important; 
 }
 
 .card-title{
     font-size: 20px;
 }
 
+.text-muted{
+    color: black !important;
+}
+
+#green{
+    background-color: rgba(78,168,69,1) !important;
+}
+
+#yellow{
+    background-color: yellow !important;
+}
+
+#red{
+    background-color: rgba(231, 76, 60, 1) !important;
+}
 
