@@ -1,33 +1,45 @@
-//var dict = '{"pollutionValue": [12.09, 2, 90, 31, 12, 35.5, 90], "pollutionLevel": ["medium", "low", "high", "medium", "low", "high", "high"]}'
+var pm25 = '{"pollutionValue": [12.09, 2, 90, 31, 12, 35.5, 90], "pollutionLevel": [1,0,2,1,0,2,2]}'
 
-function jsonToLists(jsonFile){
-    var pollutionDict = JSON.parse(jsonFile);
-    pollution(pollutionDict.pollutionValue, pollutionDict.pollutionLevel);    
+var pm10 = '{"pollutionValue": [1.09, 4, 3, 51, 5, 6, 80], "pollutionLevel": [0,0,0,1,0,0,2]}'
+
+function jsonToLists(PM25, PM10){
+    var pM25 = JSON.parse(PM25);
+    var pM10 = JSON.parse(PM10);
+    
+    pollution(pM25.pollutionValue, pM10.pollutionValue, pM25.pollutionLevel, pM10.pollutionLevel);    
 }
 //Place pollutionValue in HTML "text-muted" and change textcolor and window image according to the pollutionLevel.
 
-function pollution(listOfValues, listOfLevel){
-	var i;
+function pollution(listOfPM25, listOfPM10, levelPM25, levelPM10){
+    var image = document.getElementsByClassName("card-img-top");
+    var pm25 = document.getElementsByClassName("text-muted");
+    var pm10 = document.getElementsByClassName("text-muted2");
+    
+    var i;
 	for (i = 0; i < 7; i++){
-		var n = i.toString();
-        document.getElementsByClassName("text-muted")[i].innerHTML = listOfValues[i];
+        pm25[i].innerHTML = "PM2.5: " + (Math.round(listOfPM25[i]*10)/10);
+        pm10[i].innerHTML = "PM10: " + (Math.round(listOfPM10[i]*10)/10);
         
-        if (listOfLevel[i] == "low"){
-            document.getElementsByClassName("card-footer")[i].id="green";
-            var image = document.getElementsByClassName("card-img-top")[i];
-            image.src = "images/open_brown.png"
+        if (levelPM25[i] == 0){
+            pm25[i].id = "green";
+        }else if (levelPM25[i] == 1){
+            pm25[i].id = "yellow";
+        }else if (levelPM25[i] == 2){
+            pm25[i].id = "red";
         }
-        else if (listOfLevel[i] == "medium"){
-             document.getElementsByClassName("card-footer")[i].id="yellow";
-            var image = document.getElementsByClassName("card-img-top")[i];
-            image.src = "images/medium_brown.png"
+        if (levelPM10[i] == 0){
+            pm10[i].id = "green";
+        }else if (levelPM10[i] == 1){
+            pm10[i].id = "yellow";
+        }else if (levelPM10[i] == 2){
+            pm10[i].id = "red";
         }
-        else if (listOfLevel[i] == "high"){
-            document.getElementsByClassName("card-footer")[i].id="red";
-            var image = document.getElementsByClassName("card-img-top")[i];
-            image.src = "images/close_brown.png"
+        if (levelPM25[i] < levelPM10[i]){
+            image[i].src = "images/" + levelPM10[i] + ".png";
+        }else{
+            image[i].src = "images/" + levelPM25[i] + ".png";
         }
-	}
+    }
 }
 
 //Days placed in "card-title" in HTML
@@ -51,4 +63,4 @@ function dateInCard(){
 }
 
 dateInCard();
-//jsonToLists(the request that returns json object);
+jsonToLists(pm25, pm10);

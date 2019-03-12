@@ -62,7 +62,7 @@ body{
 }
 
 #yellow{
-    color: #FDAE12;
+    color: #FDAE12 !important;
 }
 
 #red{
