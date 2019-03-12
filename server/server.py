@@ -25,14 +25,6 @@ DATAFORMATPM10 = ['date', 'PM10', 'humidity', 'wnd_spd10', 'temp_avg', 'precipit
 PM2_5_LOW_POLLUTION_TRESHHOLD = 12
 PM2_5_MEDIUM_POLLUTION_TRESHHOLD = 35.4
 
-def load_model():
-    # load the pre-trained Keras model (here we are using a model
-    # pre-trained on ImageNet and provided by Keras, but you can
-    # substitute in your own networks just as easily)
-    global model
-    model = keras.models.load_model('models/model_PM2_5.h5')
-    model._make_predict_function()
-
 def toFarenheit(c):
 	return 9/5 * c + 32;
 
@@ -78,21 +70,13 @@ def getWeather():
 
 @app.route("/predict", methods=["GET"])
 def predict():
-	response = {}
-
 	forecastedWeather = getWeather()
-	testInput = [
-		[0.531629, 0.724701, 0.194444, 0.000000],
-		[0.531629, 0.724701, 0.194444, 0.000000]
-	]
-	testInput = np.array(testInput)
-	testInput = testInput.reshape((testInput.shape[0], 1, testInput.shape[1]))
-	response["predictions"] = model.predict(testInput)
-
+	results = predictorPM2_5.predict(forecastedWeather)
+	response = prepareResponse(results.tolist())
 	return flask.jsonify(response)
 
-def prepareData(dataFormat):
-	dataset = read_csv('trainingdata.csv', header=0, index_col=0, usecols=dataFormat)
+def prepareData(filePath, dataFormat):
+	dataset = read_csv(filePath, header=0, index_col=0, usecols=dataFormat)
 	cols = dataset.columns.tolist()
 	cols = [cols[-1]] + cols[:-1]
 	dataset = dataset[cols]
@@ -104,16 +88,11 @@ def main():
 	print(("* Loading Keras model and Flask starting server..."
 	  "please wait until server has fully started"))
 	
-	#datasetPM2_5 = prepareData(DATAFORMATPM2_5)
+	datasetPM2_5 = prepareData('trainingdata.csv' ,DATAFORMATPM2_5)
 	
-	#predictorPM2_5 = LSTMForecast(datasetPM2_5.values, 4)
-	#predictorPM2_5.init('models/model_PM2_5.h5', [0,6,7,8,9], True)
+	predictorPM2_5 = LSTMForecast(datasetPM2_5.values, 4)
+	predictorPM2_5.init('models/model_PM2_5.h5', [0,6,7,8,9], False)
 
-	#testInput = [[52.0,12.96,54.752,0.0],[45.0,22.22,58.495999999999995,0.0],[40.0,22.22,54.5,0.0],[40.0,12.96,53.492000000000004,0.0],[49.0,12.96,56.003,0.0],[49.0,12.96,57.002,0.0],[41.0,11.11,58.505,0.0]]
-	#predictedPM2_5 = predictorPM2_5.predict(testInput)
-	#response = prepareResponse(predictedPM2_5)
-	#print(response)
-	load_model()
 	app.run()
 
 if __name__ == "__main__":

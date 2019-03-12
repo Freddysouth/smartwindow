@@ -139,6 +139,7 @@ class LSTMForecast:
 		else:
 			if os.path.exists(filePath):
 				self.model = keras.models.load_model(filePath)
+				self.model._make_predict_function()
 			else:
 				self.trainModel(filePath, columnsToDrop)
 
@@ -156,7 +157,6 @@ class LSTMForecast:
 		actualPrediction = self.getActualPrediction(scaled, normalizedPrediction)
 
 		return actualPrediction[:, 0]
-
 
 
 	#test_X = test_X.reshape((test_X.shape[0], test_X.shape[2]))
