@@ -155,7 +155,7 @@ class LSTMForecast:
 		normalizedPrediction = self.getNormalizedPrediction(scaled)
 		actualPrediction = self.getActualPrediction(scaled, normalizedPrediction)
 
-		return actualPrediction
+		return actualPrediction[:, 0]
 
 
 

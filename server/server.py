@@ -17,7 +17,21 @@ from LSTMForecast import LSTMForecast
 app = flask.Flask(__name__)
 model = None
 
-DATAFORMAT = ['date', 'PM2.5', 'humidity', 'wnd_spd10', 'temp_avg', 'precipitation_avg']
+predictorPM2_5 = None
+
+DATAFORMATPM2_5 = ['date', 'PM2.5', 'humidity', 'wnd_spd10', 'temp_avg', 'precipitation_avg']
+DATAFORMATPM10 = ['date', 'PM10', 'humidity', 'wnd_spd10', 'temp_avg', 'precipitation_avg']
+
+PM2_5_LOW_POLLUTION_TRESHHOLD = 12
+PM2_5_MEDIUM_POLLUTION_TRESHHOLD = 35.4
+
+def load_model():
+    # load the pre-trained Keras model (here we are using a model
+    # pre-trained on ImageNet and provided by Keras, but you can
+    # substitute in your own networks just as easily)
+    global model
+    model = keras.models.load_model('models/model_PM2_5.h5')
+    model._make_predict_function()
 
 def toFarenheit(c):
 	return 9/5 * c + 32;
@@ -40,6 +54,21 @@ def makeListOfWeatherParams(keys, weather):
 		d.append(dayList)
 	return d
 
+def prepareResponse(predictedPollution):
+	response = {}
+	response["pollutionValue"] = predictedPollution
+	predictionDescription = []
+
+	for i in predictedPollution:
+		if (i <= PM2_5_LOW_POLLUTION_TRESHHOLD):
+			predictionDescription.append("low")
+		elif (i <= PM2_5_MEDIUM_POLLUTION_TRESHHOLD):
+			predictionDescription.append("medium")
+		else:
+			predictionDescription.append("high")
+	response["pollutionDescription"] = predictionDescription
+	return response
+
 def getWeather():
 	response = requests.get("https://weather.cit.api.here.com/weather/1.0/report.json?product=forecast_7days_simple&zipcode=93117&oneobservation=true&app_id=Is7EbpLYqp7H4EUwNyMz&app_code=sdwekigD9nSSWlQBa0pZ3g")
 	data = response.json()
@@ -47,39 +76,47 @@ def getWeather():
 	listOfWeatherParams = makeListOfWeatherParams(["humidity", "windSpeed", "highTemperature", "rainFall"], weather)
 	return listOfWeatherParams
 
-@app.route("/predict", methods=["POST"])
+@app.route("/predict", methods=["GET"])
 def predict():
-	pass
+	response = {}
 
+	forecastedWeather = getWeather()
+	testInput = [
+		[0.531629, 0.724701, 0.194444, 0.000000],
+		[0.531629, 0.724701, 0.194444, 0.000000]
+	]
+	testInput = np.array(testInput)
+	testInput = testInput.reshape((testInput.shape[0], 1, testInput.shape[1]))
+	response["predictions"] = model.predict(testInput)
 
-def prepareData():
-	dataset = read_csv('trainingdata.csv', header=0, index_col=0, usecols=DATAFORMAT)
+	return flask.jsonify(response)
+
+def prepareData(dataFormat):
+	dataset = read_csv('trainingdata.csv', header=0, index_col=0, usecols=dataFormat)
 	cols = dataset.columns.tolist()
 	cols = [cols[-1]] + cols[:-1]
 	dataset = dataset[cols]
 	return dataset
 	
+def main():
+	global predictorPM2_5
 
-if __name__ == "__main__":
 	print(("* Loading Keras model and Flask starting server..."
 	  "please wait until server has fully started"))
-	#dataset = read_csv('pollution.csv', header=0, index_col=0)
-	#print(dataset)
-	#values = dataset.values[50 : 52]
 	
-	forcastedWeather = getWeather()
-	print(forcastedWeather)
-	dataset = prepareData()
-	print(dataset)
-	predictData = dataset.values[10:20]
+	#datasetPM2_5 = prepareData(DATAFORMATPM2_5)
 	
-	predictorP25 = LSTMForecast(dataset.values, 4)
-	predictorP25.init('models/model.h5', [0,6,7,8,9], False)
+	#predictorPM2_5 = LSTMForecast(datasetPM2_5.values, 4)
+	#predictorPM2_5.init('models/model_PM2_5.h5', [0,6,7,8,9], True)
 
-	#values = predictorP25.predict(predictData[:, 1:])
-	predictedPollution = predictorP25.predict(forcastedWeather)
-
-	print("###### RESULT ######")
-	print(predictedPollution)
-
+	#testInput = [[52.0,12.96,54.752,0.0],[45.0,22.22,58.495999999999995,0.0],[40.0,22.22,54.5,0.0],[40.0,12.96,53.492000000000004,0.0],[49.0,12.96,56.003,0.0],[49.0,12.96,57.002,0.0],[41.0,11.11,58.505,0.0]]
+	#predictedPM2_5 = predictorPM2_5.predict(testInput)
+	#response = prepareResponse(predictedPM2_5)
+	#print(response)
+	load_model()
 	app.run()
+
+if __name__ == "__main__":
+	main()
+
+
