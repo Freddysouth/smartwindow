@@ -51,10 +51,12 @@ body{
     color: #605B62;
 }
 
-.text-muted{
-    color: inherit !important;
-    font-family: 'Lato' !important;
-    font-weight: bold !important;
+.pm25{
+    flex-direction: column;
+}
+
+.pmText{
+    font-size: 10px;
 }
 
 #green{

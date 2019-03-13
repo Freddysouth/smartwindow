@@ -17,8 +17,8 @@ function pollution(listOfPM25, listOfPM10, levelPM25, levelPM10){
     
     var i;
 	for (i = 0; i < 7; i++){
-        pm25[i].innerHTML = "PM2.5: " + (Math.round(listOfPM25[i]*10)/10);
-        pm10[i].innerHTML = "PM10: " + (Math.round(listOfPM10[i]*10)/10);
+        pm25[i].innerHTML = Math.round(listOfPM25[i]*10)/10;
+        pm10[i].innerHTML = Math.round(listOfPM10[i]*10)/10;
         
         if (levelPM25[i] == 0){
             pm25[i].id = "green";
