@@ -90,7 +90,7 @@ def predict(pollutionType):
 	
 @app.route("/", methods=["GET"])
 def home():
-	return "home!"
+	return flask.render_template('index.html')
 
 def main():
 	global predictorPM2_5, predictorPM10
