@@ -8,12 +8,12 @@ function jsonToLists(PM25, PM10){
     
     pollution(pM25.pollutionValue, pM10.pollutionValue, pM25.pollutionLevel, pM10.pollutionLevel);    
 }
-//Place pollutionValue in HTML "text-muted" and change textcolor and window image according to the pollutionLevel.
+//Place pollutionValue in HTML "pm25Value" and change textcolor and window image according to the pollutionLevel.
 
 function pollution(listOfPM25, listOfPM10, levelPM25, levelPM10){
     var image = document.getElementsByClassName("card-img-top");
-    var pm25 = document.getElementsByClassName("text-muted");
-    var pm10 = document.getElementsByClassName("text-muted2");
+    var pm25 = document.getElementsByClassName("pm25Value");
+    var pm10 = document.getElementsByClassName("pm10Value");
     
     var i;
 	for (i = 0; i < 7; i++){
