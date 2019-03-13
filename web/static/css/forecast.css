@@ -7,12 +7,13 @@
     color: rgb(129,123,111);
 }
 
-#logo{
-    width:35%;
-    margin-top: 40px;
-    margin-left: 500px;
+.logo{
+    margin-left: auto;
+    margin-right: auto;
+    width: 20%;
+    margin-top: 2%;
+    margin-bottom: 3%;
 }
-
 body{
     background-image: url("../images/coast.jpg");
     background-repeat:no-repeat;
@@ -21,12 +22,12 @@ body{
 }
 
 .card-block{
-    background-color: rgba(255,255,255,0.5) !important;
-    
+    background-color: rgba(255,255,255,0.6) !important;
+    padding: 10px;
+    padding-bottom: 1px;
 }
 
 .card-deck{
-    margin-top: -70px;
     margin-left: 150px;
     margin-right: 150px;
     background-color: rgba(234,224,212,0.4);
@@ -41,8 +42,9 @@ body{
     background-color: transparent !important;
     color: black !important;
 }
-.card-footer{
-    background-color: rgba(255,255,255,0.6) !important; 
+.card-pmValues{
+    background-color: rgba(255,255,255,0.5) !important;
+    padding-bottom: 2px;
 
 }
 
