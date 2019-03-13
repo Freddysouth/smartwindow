@@ -11,15 +11,16 @@ from pandas import concat
 import keras.models
 
 from LSTMForecaster import LSTMForecaster
+import datetime
 
 app = flask.Flask(__name__)
 
 predictorPM2_5 = None
 predictorPM10 = None
 
-DATAFORMATPM2_5 = ['date', 'PM2.5', 'humidity', 'wnd_spd10', 'temp_avg', 'precipitation_avg']
-DATAFORMATPM10 = ['date', 'PM10', 'humidity', 'wnd_spd10', 'temp_avg', 'precipitation_avg']
-UNPREDICTED_COLS = [0,6,7,8,9]
+DATAFORMATPM2_5 = ['date', 'PM2.5', 'Humidity', 'Windspeed', 'Temperature', 'Precipitation']
+DATAFORMATPM10 = ['date', 'PM10', 'Humidity', 'Windspeed', 'Temperature', 'Precipitation']
+UNPREDICTED_COLS = [0,7,8,9,10,11]
 
 PM2_5_LOW_POLLUTION_TRESHHOLD = 12
 PM2_5_MEDIUM_POLLUTION_TRESHHOLD = 35.4
@@ -55,11 +56,11 @@ def prepareResponse(predictedPollution, pollutionType):
 	descriptions = []
 	for value in predictedPollution:
 		if (value <= lowTreshold):
-			descriptions.append("low")
+			descriptions.append(0)
 		elif (value <= mediumTreshold):
-			descriptions.append("medium")
+			descriptions.append(1)
 		else:
-			descriptions.append("high")
+			descriptions.append(2)
 	response["descriptions"] = descriptions
 	return response
 
@@ -68,15 +69,51 @@ def getWeather():
 	data = response.json()
 
 	weatherForecast = data["dailyForecasts"]["forecastLocation"]["forecast"]
-	weatherParams = makeListOfWeatherParams(["humidity", "windSpeed", "highTemperature", "rainFall"], weatherForecast)
+	weatherParams = makeListOfWeatherParams(["humidity", "windSpeed", "highTemperature", "rainFall", "dayOfWeek"], weatherForecast)
+	print(weatherParams)
 	return weatherParams
 
+def prepareWeekdayList(startDay, steps):
+	dayList = []
+	days = [1, 2, 3, 4, 5, 6, 7]
+	for i in range(steps):
+		dayList.append(days[((startDay - 1) + i) % 7])
+	return dayList
+
+#Make an estimate, based on the previous day's weather, and the previous weekday pollution
+def estimateMeanData(lastSevenDays, dayIndex):
+	pollution = lastSevenDays[0][0]
+	weather = lastSevenDays[6][1: 6]
+	newValues = [pollution] + weather
+	nextDay = dayIndex + datetime.timedelta(days=1)
+	return nextDay, newValues
+
+def fillMissingDates(indexes, values):
+	dateFormat = "%Y-%m-%d"
+	counter = 1
+	newIndexes, newValuesList = indexes, values
+
+	while counter < len(newIndexes):
+		delta = datetime.datetime.strptime(newIndexes[counter], dateFormat) - datetime.datetime.strptime(newIndexes[counter - 1], dateFormat)
+		if delta.days > 1:
+			newIndex, newValues = estimateMeanData(newValuesList[counter - 7: counter], datetime.datetime.strptime(indexes[counter - 1], dateFormat))
+			newIndexes.insert(counter, newIndex.strftime(dateFormat))
+			newValuesList.insert(counter, newValues)
+		else:
+			counter += 1
+	return newIndexes, newValuesList
+	
 def prepareData(filePath, dataFormat):
 	dataset = read_csv(filePath, header=0, index_col=0, usecols=dataFormat)
 	cols = dataset.columns.tolist()
 	cols = [cols[-1]] + cols[:-1]
 	dataset = dataset[cols]
-	return dataset
+
+	newIndexes, newValues = fillMissingDates(dataset.index.tolist(), dataset.values.tolist())
+	weeklist = prepareWeekdayList(2, len(newValues))
+	for i in range(len(newValues)):
+		newValues[i].append(weeklist[i])
+	return np.asarray(newValues)
 
 # endpoints
 @app.route("/predict/<pollutionType>", methods=["GET"])
@@ -98,15 +135,16 @@ def main():
 	print(("* Loading Keras model and Flask starting server..."
 	  "please wait until server has fully started"))
 	
-	datasetPM2_5 = prepareData('trainingData/training_PM2_5.csv', DATAFORMATPM2_5)
-	datasetPM10 = prepareData('trainingData/training_PM10.csv', DATAFORMATPM10)
+	dataPM2_5 = prepareData('trainingData/training_PM2_5.csv', DATAFORMATPM2_5)
+	dataPM10 = prepareData('trainingData/training_PM10.csv', DATAFORMATPM10)
 
-	predictorPM2_5 = LSTMForecaster(datasetPM2_5.values)
-	predictorPM2_5.init('models/model_PM2_5.h5', UNPREDICTED_COLS, False)
-	#predictorPM2_5.csvResults()
+	predictorPM2_5 = LSTMForecaster(dataPM2_5)
+	predictorPM2_5.init('models/model_PM2_5.h5', UNPREDICTED_COLS, True)
+	#predictorPM2_5.csvResults('PM2_5_graph_data.csv')
 
-	predictorPM10 = LSTMForecaster(datasetPM10.values)
-	predictorPM10.init('models/model_PM10.h5', UNPREDICTED_COLS, False)
+	predictorPM10 = LSTMForecaster(dataPM10)
+	predictorPM10.init('models/model_PM10.h5', UNPREDICTED_COLS, True)
+	#predictorPM10.csvResults('PM10_graph_data.csv')
 
 	app.run()
 

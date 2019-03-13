@@ -1,15 +1,5 @@
-var pm25 = '{"pollutionValue": [12.09, 2, 90, 31, 12, 35.5, 90], "pollutionLevel": [1,0,2,1,0,2,2]}'
 
-var pm10 = '{"pollutionValue": [1.09, 4, 3, 51, 5, 6, 80], "pollutionLevel": [0,0,0,1,0,0,2]}'
-
-function jsonToLists(PM25, PM10){
-    var pM25 = JSON.parse(PM25);
-    var pM10 = JSON.parse(PM10);
-    
-    pollution(pM25.pollutionValue, pM10.pollutionValue, pM25.pollutionLevel, pM10.pollutionLevel);    
-}
 //Place pollutionValue in HTML "pm25Value" and change textcolor and window image according to the pollutionLevel.
-
 function pollution(listOfPM25, listOfPM10, levelPM25, levelPM10){
     var image = document.getElementsByClassName("card-img-top");
     var pm25 = document.getElementsByClassName("pm25Value");
@@ -62,5 +52,11 @@ function dateInCard(){
     }
 }
 
-dateInCard();
-jsonToLists(pm25, pm10);
+$(document).ready(() => {
+    $.get('predict/PM10', (dataPM10, status) => {
+        $.get('predict/PM2_5', (dataPM2_5, status) => {
+            pollution(dataPM2_5.predictedPollution, dataPM10.predictedPollution, dataPM2_5.descriptions, dataPM10.descriptions);
+        })
+    });
+    dateInCard();
+})
