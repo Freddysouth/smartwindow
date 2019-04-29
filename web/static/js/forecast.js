@@ -53,8 +53,10 @@ function dateInCard(){
 }
 
 $(document).ready(() => {
-    $.get('predict/PM10', (dataPM10, status) => {
-        $.get('predict/PM2_5', (dataPM2_5, status) => {
+    let urlPM10 = 'predict/static/PM10' // if you want to use the continuously trained model: predict/dynamic/PM10 
+    let urlPM2_5 = 'predict/static/PM2_5' // if you want to use the continuously trained model: predict/dynamic/PM2_5 
+    $.get(urlPM10, (dataPM10, status) => {
+        $.get(urlPM2_5, (dataPM2_5, status) => {
             pollution(dataPM2_5.predictedPollution, dataPM10.predictedPollution, dataPM2_5.descriptions, dataPM10.descriptions);
         })
     });

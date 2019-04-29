@@ -7,16 +7,27 @@ import numpy as np
 from pandas import read_csv
 from pandas import DataFrame
 from pandas import concat
+from random import *
+from threading import Timer
 
 import keras.models
 
 from LSTMForecaster import LSTMForecaster
 import datetime
+import boto3
+from boto3.dynamodb.conditions import Key, Attr
+
+dynamodb = boto3.resource('dynamodb')
+tableAQMeasurements = dynamodb.Table('AQMeasurements')
+tableTrainingData = dynamodb.Table('TrainingData')
 
 app = flask.Flask(__name__)
 
 predictorPM2_5 = None
 predictorPM10 = None
+
+dynamicModelPM10 = None
+dynamicModelPM2_5 = None
 
 DATAFORMATPM2_5 = ['date', 'PM2.5', 'Humidity', 'Windspeed', 'Temperature', 'Precipitation']
 DATAFORMATPM10 = ['date', 'PM10', 'Humidity', 'Windspeed', 'Temperature', 'Precipitation']
@@ -70,7 +81,6 @@ def getWeather():
 
 	weatherForecast = data["dailyForecasts"]["forecastLocation"]["forecast"]
 	weatherParams = makeListOfWeatherParams(["humidity", "windSpeed", "highTemperature", "rainFall", "dayOfWeek"], weatherForecast)
-	print(weatherParams)
 	return weatherParams
 
 def prepareWeekdayList(startDay, steps):
@@ -115,10 +125,81 @@ def prepareData(filePath, dataFormat):
 		newValues[i].append(weeklist[i])
 	return np.asarray(newValues)
 
+def fetchPollutionMeasurements(day):
+	pm10, pm2_5 = None, None
+	response = tableAQMeasurements.query(
+		KeyConditionExpression=Key('Device').eq('window_lars') & Key('TimeStamp').begins_with(day)
+	)
+	if response:
+		if response['Items'] and len(response['Items']) > 1:
+			measurements = response['Items']
+			pm10 = np.mean(list(map(lambda d: d['payload']['pm10'], measurements)))
+			pm2_5 = np.mean(list(map(lambda d: d['payload']['pm25'], measurements)))
+	return pm10, pm2_5
+
+
+def appendToTrainingDataBaseTable():
+	today = datetime.datetime.today()
+	todayDate = today.strftime('%d.%m.%Y')
+	weatherParams = getWeather()
+	pm10, pm2_5 = fetchPollutionMeasurements(todayDate)
+	if pm10 and pm2_5:
+		tableTrainingData.put_item(
+			Item= {
+				'PollutionType': 'AQ',
+				'Date': todayDate,
+				'pm10': str(float(pm10)),
+				'pm2_5': str(float(pm2_5)),
+				'humidity': str(weatherParams[0][0]),
+				'windspeed': str(weatherParams[0][1]),
+				'temperature': str(weatherParams[0][2]),
+				'rainfall': str(weatherParams[0][3]),
+				'weekday': str(int(weatherParams[0][4]))
+			}
+		)
+
+	# call self tomorrow
+	tomorrow = (today + datetime.timedelta(days=1)).replace(hour=2, minute=0, second=0) 
+	deltaTime = tomorrow - today
+	deltaSecs = deltaTime.seconds + 1
+	t = Timer(deltaSecs, appendToTrainingDataBaseTable)
+	t.start()
+
+def getTrainingDataFromDynamoDB():
+	data = tableTrainingData.scan()
+	data = data['Items']
+	trainingDataPM10 = []
+	trainingDataPM25 = []
+	for d in data:
+		trainingDataPM10.append([d['pm10'], d['humidity'], d['windspeed'], d['temperature'], d['rainfall'], d['weekday']])
+		trainingDataPM25.append([d['pm2_5'], d['humidity'], d['windspeed'], d['temperature'], d['rainfall'], d['weekday']])
+	return np.asarray(trainingDataPM10), np.asarray(trainingDataPM25)
+
+def retrainDynamicModels():
+	global dynamicModelPM10, dynamicModelPM2_5
+	pm10Training, pm25Training = getTrainingDataFromDynamoDB()
+	
+	dynamicModelPM10 = LSTMForecaster(pm10Training)
+	dynamicModelPM10.init('models/dynamicModelPM10.h5', UNPREDICTED_COLS, True)
+	dynamicModelPM2_5 = LSTMForecaster(pm25Training)
+	dynamicModelPM2_5.init('models/dynamicModelPM2_5.h5', UNPREDICTED_COLS, True)
+	
+	# call self next week
+	today = datetime.datetime.today()
+	nextWeek = (today + datetime.timedelta(days=7)).replace(hour=2, minute=0, second=0)
+	deltaTime = nextWeek - today
+	deltaSecs = deltaTime.seconds + 1
+	t = Timer(deltaSecs, retrainDynamicModels)
+	t.start()
+
+
 # endpoints
-@app.route("/predict/<pollutionType>", methods=["GET"])
-def predict(pollutionType):
-	predictor = predictorPM2_5 if pollutionType == "PM2_5" else predictorPM10
+@app.route("/predict/<model>/<pollutionType>", methods=["GET"])
+def predict(model, pollutionType):
+	if model == 'dynamic':
+		predictor = dynamicModelPM2_5 if pollutionType == "PM2_5" else dynamicModelPM10	
+	elif model == 'static':
+		predictor = predictorPM2_5 if pollutionType == "PM2_5" else predictorPM10
 	
 	forecastedWeather = getWeather()
 	predictedPollution = predictor.predict(forecastedWeather)
@@ -139,13 +220,18 @@ def main():
 	dataPM10 = prepareData('trainingData/training_PM10.csv', DATAFORMATPM10)
 
 	predictorPM2_5 = LSTMForecaster(dataPM2_5)
-	predictorPM2_5.init('models/model_PM2_5.h5', UNPREDICTED_COLS, True)
+	predictorPM2_5.init('models/model_PM2_5.h5', UNPREDICTED_COLS, False)
 	#predictorPM2_5.csvResults('PM2_5_graph_data.csv')
 
 	predictorPM10 = LSTMForecaster(dataPM10)
-	predictorPM10.init('models/model_PM10.h5', UNPREDICTED_COLS, True)
+	predictorPM10.init('models/model_PM10.h5', UNPREDICTED_COLS, False)
 	#predictorPM10.csvResults('PM10_graph_data.csv')
-
+	
+	retrainDynamicModels()#repeating every seven days
+	appendToTrainingDataBaseTable()#repeating every day
+	
+	print("* Repeat training of dynamic model every 7 days...")
+	print("* Append new training data every day...")
 	app.run()
 
 if __name__ == "__main__":
