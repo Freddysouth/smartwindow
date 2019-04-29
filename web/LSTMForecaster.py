@@ -136,7 +136,7 @@ class LSTMForecaster:
 			else:
 				self.trainModel(filePath, columnsToDrop)
 
-	def csvResults(self):
+	def csvResults(self, filePath):
 
 		inputs = self.values[:, :-1]
 		inputShaped = inputs.reshape((inputs.shape[0], 1, inputs.shape[1]))
@@ -151,6 +151,6 @@ class LSTMForecaster:
 		results = {"predictions": predictions, "labels": labels}
 		print(results)
 		r =DataFrame.from_dict(results)
-		r.to_csv('predicions_vs_labels_onlyweather_1.csv', index=False)
+		r.to_csv(filePath, index=False)
 
 
